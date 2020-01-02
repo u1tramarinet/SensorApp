@@ -1,4 +1,4 @@
-package com.example.admin.sensorapp;
+package com.example.sensorapp;
 
 import org.junit.Test;
 
