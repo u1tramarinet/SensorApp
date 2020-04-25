@@ -3,7 +3,6 @@ package com.example.sensorapp.detail;
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -17,12 +16,14 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 
+import com.example.sensorapp.LifecycleAwareSensorEventListener;
 import com.example.sensorapp.R;
+import com.example.sensorapp.util.ConditionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class DetailFragment extends Fragment implements SensorEventListener {
+public class DetailFragment extends Fragment implements LifecycleAwareSensorEventListener {
 
     private DetailViewModel viewModel;
     private SensorManager sensorManager;
@@ -39,13 +40,14 @@ public class DetailFragment extends Fragment implements SensorEventListener {
         ListView listView = root.findViewById(R.id.listView);
         listView.setEmptyView(root.findViewById(R.id.empty));
         listView.setAdapter(adapter);
+        getLifecycle().addObserver(this);
         return root;
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        viewModel = ViewModelProviders.of(getActivity()).get(DetailViewModel.class);
+        viewModel = ViewModelProviders.of(requireActivity()).get(DetailViewModel.class);
         viewModel.sensor().observe(this, new Observer<Sensor>() {
             @Override
             public void onChanged(Sensor sensor) {
@@ -58,23 +60,11 @@ public class DetailFragment extends Fragment implements SensorEventListener {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        sensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
+        sensorManager = (SensorManager) ConditionUtils.requireNonNull(getContext()).getSystemService(Context.SENSOR_SERVICE);
         adapter = new DetailAdapter();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        registerListener();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        unregisterListener();
-    }
-
-    private void registerListener() {
+    public void registerListener() {
         Sensor sensor = viewModel.sensor().getValue();
         registerListener(sensor);
     }
@@ -84,7 +74,7 @@ public class DetailFragment extends Fragment implements SensorEventListener {
         sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
-    private void unregisterListener() {
+    public void unregisterListener() {
         sensorManager.unregisterListener(this);
     }
 
